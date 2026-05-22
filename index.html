@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Форма обратной связи</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', Arial, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e8eaf6 100%);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .decoration {
+            position: fixed;
+            font-size: 30px;
+            opacity: 0.3;
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .decoration:nth-child(1) { top: 5%; left: 5%; animation-delay: 0s; }
+        .decoration:nth-child(2) { top: 15%; right: 10%; animation-delay: 1s; }
+        .decoration:nth-child(3) { bottom: 20%; left: 8%; animation-delay: 2s; }
+        .decoration:nth-child(4) { bottom: 10%; right: 5%; animation-delay: 0.5s; }
+        .decoration:nth-child(5) { top: 50%; left: 3%; animation-delay: 1.5s; }
+        .decoration:nth-child(6) { top: 30%; right: 3%; animation-delay: 2.5s; }
+        .decoration:nth-child(7) { bottom: 35%; left: 12%; animation-delay: 3s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+
+        form {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 35px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(233, 30, 99, 0.15);
+            width: 100%;
+            max-width: 480px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            position: relative;
+            z-index: 1;
+        }
+
+        form::before {
+            content: "🌸";
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 36px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #e91e63;
+            margin-top: 5px;
+            margin-bottom: 25px;
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            color: #7b1fa2;
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            margin-top: 6px;
+            border: 2px solid #e1bee7;
+            border-radius: 14px;
+            font-size: 15px;
+            font-family: 'Nunito', Arial, sans-serif;
+            transition: all 0.3s ease;
+            background: #faf5ff;
+            outline: none;
+        }
+
+        input:focus, textarea:focus {
+            border-color: #e91e63;
+            box-shadow: 0 0 0 4px rgba(233, 30, 99, 0.1);
+            background: white;
+        }
+
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin-top: 24px;
+            background: linear-gradient(135deg, #e91e63, #9c27b0);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Nunito', Arial, sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(233, 30, 99, 0.35);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #success-message {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #fce4ec, #f3e5f5);
+            color: #c2185b;
+            border-radius: 16px;
+            border: 2px solid #f8bbd0;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        #success-message::before {
+            content: "🎉 ";
+        }
+    </style>
+</head>
+<body>
+    <div class="decoration">🌸</div>
+    <div class="decoration">⭐</div>
+    <div class="decoration">🦋</div>
+    <div class="decoration">🌷</div>
+    <div class="decoration">💖</div>
+    <div class="decoration">✨</div>
+    <div class="decoration">🍀</div>
+
+    <form id="contact-form">
+        <h1>Форма обратной связи</h1>
+
+        <label for="name">Имя</label>
+        <input type="text" id="name" name="name" placeholder="Введите ваше имя..." required>
+
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="Введите ваш email..." required>
+
+        <label for="message">Сообщение</label>
+        <textarea id="message" name="message" placeholder="Напишите что-нибудь приятное..." required></textarea>
+
+        <button type="submit">Отправить</button>
+    </form>
+    <div id="success-message">Спасибо! Ваше сообщение отправлено.</div>
+
+    <script>
+        document.getElementById('contact-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            document.getElementById('contact-form').style.display = 'none';
+            document.getElementById('success-message').style.display = 'block';
+        });
+    </script>
+</body>
+</html>

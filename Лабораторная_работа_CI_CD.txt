@@ -1,0 +1,272 @@
+================================================================================
+  ЛАБОРАТОРНАЯ РАБОТА: CI/CD с GitHub Actions
+================================================================================
+
+Данный файл содержит пошаговое описание всех действий для выполнения
+лабораторной работы по настройке Continuous Integration / Continuous Deployment
+с использованием GitHub Actions, Selenium и GitHub Pages.
+
+================================================================================
+1. РАЗРАБОТКА ВЕБ-СТРАНИЦЫ
+================================================================================
+
+Создан файл index.html — простая форма обратной связи с полями:
+- Имя (<input type="text" id="name">)
+- Email (<input type="email" id="email">)
+- Сообщение (<textarea id="message">)
+- Кнопка отправки (<button type="submit">)
+
+При отправке формы через JavaScript (addEventListener) форма скрывается и
+показывается блок #success-message с текстом "Спасибо! Ваше сообщение отправлено."
+
+Файл: index.html
+
+================================================================================
+2. СОЗДАНИЕ РЕПОЗИТОРИЯ НА GITHUB И ПЕРВЫЙ КОММИТ
+================================================================================
+
+ШАГ 2.1: Создать репозиторий на GitHub
+  - Зайти на https://github.com
+  - Нажать "New repository"
+  - Назвать, например, "ci-cd-lab"
+  - Выбрать "Public" (для GitHub Pages нужно Public)
+  - НЕ инициализировать README, .gitignore (сделаем локально)
+  - Нажать "Create repository"
+
+ШАГ 2.2: Инициализировать Git локально и сделать первый коммит в main
+
+  git init
+  git add .
+  git commit -m "Initial commit: web form and CI setup"
+
+  git branch -M main
+  git remote add origin https://github.com/ВАШ_ЛОГИН/ci-cd-lab.git
+  git push -u origin main
+
+ШАГ 2.3: Создать ветку dev (основная для разработки)
+
+  git checkout -b dev
+  git push -u origin dev
+
+ШАГ 2.4: Создать ветку fix (для исправлений/новых задач)
+
+  git checkout -b fix
+  git push -u origin fix
+
+ИТОГО в удаленном репозитории будет 3 ветки: main, dev, fix.
+
+================================================================================
+3. АВТОМАТИЗИРОВАННЫЕ ТЕСТЫ UI (SELENIUM)
+================================================================================
+
+Созданы 4 теста в папке tests/:
+
+  tests/
+    conftest.py     — фикстура driver (Chrome headless через webdriver-manager)
+    test_form.py    — 4 теста
+
+Список тестов:
+
+  (1) test_page_title
+      - Проверяет, что в заголовке страницы есть текст "Форма обратной связи"
+
+  (2) test_form_elements_present
+      - Проверяет, что все элементы формы (поля ввода, кнопка) отображаются
+        на странице
+
+  (3) test_form_submission_shows_success
+      - Заполняет форму, отправляет, проверяет появление success-сообщения
+        с текстом "Спасибо"
+
+  (4) test_form_required_fields
+      - Пытается отправить пустую форму, проверяет что форма осталась видимой
+        (браузерная валидация не пропустила)
+
+Зависимости в requirements.txt:
+  pytest==8.3.4
+  selenium==4.27.1
+  webdriver-manager==4.0.2
+
+Для локального запуска тестов:
+  python -m http.server 8000    (в корне проекта, в отдельном терминале)
+  pytest tests/ -v               (в другом терминале)
+
+================================================================================
+4. НАСТРОЙКА CI (GITHUB ACTIONS)
+================================================================================
+
+Создан файл .github/workflows/ci.yml.
+
+Что он делает:
+  - Триггеры: push в main/dev/fix, pull request в main/dev
+  - Джоба test:
+      1. checkout репозитория
+      2. Установка Python 3.11
+      3. Установка зависимостей (pip install -r requirements.txt)
+      4. Запуск HTTP-сервера (python -m http.server 8000) в фоне
+      5. Запуск тестов (pytest tests/ -v)
+  - Джоба deploy (запускается ТОЛЬКО после успешного test, только для main):
+      1. checkout
+      2. upload-pages-artifact (загружает весь проект как artifact)
+      3. deploy-pages (публикует на GitHub Pages)
+
+Если тесты падают — джоба test завершается ошибкой, deploy НЕ запускается.
+
+================================================================================
+5. ПРОВЕРКА: ТЕСТЫ ЗАВЕРШАЮТСЯ НЕУСПЕШНО ПРИ ОШИБКАХ
+================================================================================
+
+Чтобы убедиться, что CI ловит ошибки, нужно:
+
+  1) Внести заведомую ошибку в index.html, например:
+       Изменить id кнопки с "submit" на "submit-button"
+
+  2) Закоммитить и запушить:
+       git add index.html
+       git commit -m "intentional bug: wrong button id"
+       git push
+
+  3) На GitHub в разделе Actions увидеть, что тесты УПАЛИ:
+       - test_form_elements_present: button[type='submit'] не найден
+       - test_form_submission_shows_success: кнопка не найдена
+
+  4) Исправить ошибку, закоммитить, запушить — тесты снова зеленые.
+
+================================================================================
+6. ОРГАНИЗАЦИЯ РАБОТЫ С ВЕТКАМИ
+================================================================================
+
+Правила работы:
+  - В main коммитим ТОЛЬКО через pull request и слияние
+  - В dev ведется основная разработка
+  - Для каждой задачи/фичи/бага создается отдельная ветка от dev (например fix)
+  - После завершения работы — PR из fix в dev, затем из dev в main
+  - PR не может быть принят, пока тесты в CI не пройдут успешно
+
+================================================================================
+7. СЦЕНАРИЙ РАБОТЫ С ВЕТКАМИ И PULL REQUEST
+================================================================================
+
+ШАГ 7.1: Переключиться на ветку fix и внести изменения
+
+  git checkout fix
+  (внести изменения, например изменить текст кнопки на "Отправить сообщение")
+
+ШАГ 7.2: Закоммитить и запушить
+
+  git add index.html
+  git commit -m "fix: change button text"
+  git push origin fix
+
+ШАГ 7.3: Создать Pull Request fix -> dev на GitHub
+
+  - Зайти в репозиторий на GitHub
+  - Нажать "Pull requests" -> "New pull request"
+  - Base: dev, Compare: fix
+  - Название: "Fix button text"
+  - Описание: "Изменен текст кнопки отправки формы"
+  - Нажать "Create pull request"
+
+  GitHub Actions запустит тесты автоматически (триггер pull_request в dev).
+  Если тесты не прошли — исправить ошибки в ветке fix, закоммитить, запушить.
+  PR обновится автоматически, тесты запустятся снова.
+
+ШАГ 7.4: Когда тесты прошли — выполнить слияние (Merge pull request)
+
+  - Нажать "Merge pull request" -> "Confirm merge"
+  - Код попал в ветку dev
+
+ШАГ 7.5: Создать Pull Request dev -> main
+
+  - "New pull request"
+  - Base: main, Compare: dev
+  - Название: "Release: merge dev into main"
+  - GitHub Actions снова запустит тесты (триггер pull_request в main)
+
+ШАГ 7.6: После успешного прохождения тестов — Merge
+
+  - Нажать "Merge pull request"
+  - Код попал в main, тесты пройдут, запустится deploy
+
+================================================================================
+8. НАСТРОЙКА CD (AUTOMATIC DEPLOYMENT TO GITHUB PAGES)
+================================================================================
+
+ШАГ 8.1: Настроить GitHub Pages в репозитории
+
+  - Settings -> Pages
+  - Source: "GitHub Actions" (а не ветку)
+
+ШАГ 8.2: В CI/CD файле уже настроена джоба deploy:
+
+  deploy:
+    needs: test          # запускается только после успешных тестов
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/deploy-pages@v4
+
+ШАГ 8.3: После merge в main GitHub Actions:
+  1. Запускает test (прогон всех тестов Selenium)
+  2. Если тесты ОК — запускает deploy
+  3. Публикует сайт на GitHub Pages
+
+  Сайт будет доступен по адресу:
+  https://ВАШ_ЛОГИН.github.io/ci-cd-lab/
+
+ШАГ 8.4: Важно — деплой происходит ТОЛЬКО при:
+  - Успешном прохождении тестов (needs: test)
+  - Пуше в ветку main (а не в dev или fix)
+  - Триггере push (а не pull_request)
+
+================================================================================
+ПОЛНАЯ СТРУКТУРА ПРОЕКТА
+================================================================================
+
+  ci-cd-lab/
+  ├── .github/
+  │   └── workflows/
+  │       └── ci.yml              # CI/CD pipeline
+  ├── tests/
+  │   ├── conftest.py             # Фикстура Selenium WebDriver
+  │   └── test_form.py            # 4 UI теста
+  ├── index.html                  # Веб-страница с формой
+  ├── requirements.txt            # Python-зависимости
+  └── Лабораторная_работа_CI_CD.txt  # Описание (этот файл)
+
+================================================================================
+КОМАНДЫ ДЛЯ БЫСТРОГО СТАРТА
+================================================================================
+
+  # 1. Инициализация репозитория
+  git init
+  git add .
+  git commit -m "Initial commit: web form and CI setup"
+  git branch -M main
+  git remote add origin https://github.com/ВАШ_ЛОГИН/ci-cd-lab.git
+  git push -u origin main
+
+  # 2. Создание веток
+  git checkout -b dev
+  git push -u origin dev
+  git checkout -b fix
+  git push -u origin fix
+
+  # 3. Локальный запуск тестов
+  python -m http.server 8000    # терминал 1
+  pytest tests/ -v               # терминал 2
+
+  # 4. Работа с веткой fix
+  git checkout fix
+  # правим index.html
+  git add index.html
+  git commit -m "fix: description"
+  git push origin fix
+  # Далее на GitHub: PR fix -> dev -> PR dev -> main
+
+================================================================================
